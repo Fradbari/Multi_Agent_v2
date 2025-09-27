@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # Core LLM Backend
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - multi-agent-net
+    restart: unless-stopped
+
+  # Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - multi-agent-net
+    restart: unless-stopped
+
+  # Web UI for LLMs
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - 'OLLAMA_BASE_URL=http://ollama:11434'
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      - multi-agent-net
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # Visual Agent Orchestration
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: flowise
+    ports:
+      - "3001:3000"
+    volumes:
+      - flowise_data:/root/.flowise
+    networks:
+      - multi-agent-net
+    restart: unless-stopped
+
+  # Python-based Agent Orchestration
+  crewai:
+    build:
+      context: ./crewai
+    container_name: crewai
+    networks:
+      - multi-agent-net
+    depends_on:
+      - ollama
+    restart: "no" # Or 'on-failure' if you want it to retry
+
+  # --- Data Storage and Management ---
+
+  # Postgres Database for Nextcloud
+  nextcloud-db:
+    image: postgres:15
+    container_name: nextcloud-db
+    restart: unless-stopped
+    volumes:
+      - nextcloud_db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - multi-agent-net
+
+  # Redis Cache for Nextcloud
+  nextcloud-redis:
+    image: redis:alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    networks:
+      - multi-agent-net
+
+  # Nextcloud Application
+  nextcloud:
+    image: nextcloud:latest
+    container_name: nextcloud
+    restart: unless-stopped
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud_data:/var/www/html
+    environment:
+      - POSTGRES_HOST=nextcloud-db
+      - REDIS_HOST=nextcloud-redis
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+    networks:
+      - multi-agent-net
+    depends_on:
+      - nextcloud-db
+      - nextcloud-redis
+
+networks:
+  # A custom bridge network to allow containers to communicate with each other by name.
+  multi-agent-net:
+    driver: bridge
+
+volumes:
+  # Persistent volumes for data storage.
+  nextcloud_data:
+  nextcloud_db:
+  qdrant_storage:
+  ollama_data:
+  open_webui_data:
+  flowise_data:

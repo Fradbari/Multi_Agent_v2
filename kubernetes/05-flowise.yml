@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flowise-pvc
+  namespace: multi-agent-ecosystem
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi # Adjust size as needed
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowise
+  namespace: multi-agent-ecosystem
+  labels:
+    app: flowise
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flowise
+  template:
+    metadata:
+      labels:
+        app: flowise
+    spec:
+      containers:
+      - name: flowise
+        image: flowiseai/flowise:latest
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: flowise-data
+          mountPath: /root/.flowise
+      volumes:
+      - name: flowise-data
+        persistentVolumeClaim:
+          claimName: flowise-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flowise
+  namespace: multi-agent-ecosystem
+spec:
+  selector:
+    app: flowise
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3001 # The external port
+      targetPort: 3000 # The container port
+  type: LoadBalancer

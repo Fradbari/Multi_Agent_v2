@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: crewai-financial-analysis-job
+  namespace: multi-agent-ecosystem
+spec:
+  template:
+    spec:
+      containers:
+      - name: crewai-agent
+        # IMPORTANT: You must build and push this image to your container registry.
+        # Example: docker build -t your-registry/crewai-financial-agent:latest ./crewai
+        # And then: docker push your-registry/crewai-financial-agent:latest
+        image: crewai-financial-agent:latest
+        imagePullPolicy: IfNotPresent # Use 'Always' if you use a remote registry
+        env:
+        - name: OLLAMA_BASE_URL
+          value: "http://ollama:11434" # Connects to the Ollama service in the same namespace
+      restartPolicy: Never
+  backoffLimit: 4
