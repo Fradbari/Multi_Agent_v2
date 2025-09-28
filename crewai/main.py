@@ -28,7 +28,8 @@ RESEARCH_DATE_END = "2024-01-01"
 
 # --- Output Directory Setup ---
 # Use the OUTPUT_DIR environment variable if available, otherwise default to /app/outputs
-output_dir = os.getenv("OUTPUT_DIR", "/app/outputs")
+base_storage = os.getenv("CREWAI_STORAGE_DIR", "/app/storage")
+output_dir = os.getenv("OUTPUT_DIR", base_storage)
 os.makedirs(output_dir, exist_ok=True)
 
 # --- LLM and Tool Setup ---
@@ -274,7 +275,7 @@ strategy_task = Task(
 )
 
 # Configura storage personalizzato per Kubernetes
-storage_path = os.getenv("CREWAI_STORAGE_DIR", "/app/storage")
+storage_path = base_storage
 os.makedirs(storage_path, exist_ok=True)
 os.environ["CREWAI_STORAGE_DIR"] = storage_path
 
@@ -335,9 +336,7 @@ if __name__ == '__main__':
     logger.info(f"🚀 Starting Financial Analysis Crew for {STOCK_TICKER}")
     print("🚀 Starting Financial Analysis Crew per ", STOCK_TICKER)
     print("-" * 50)
-
-    result = financial_crew.kickoff()
-
+    
     try:
         # Esecuzione con gestione errori
         result = financial_crew.kickoff()
