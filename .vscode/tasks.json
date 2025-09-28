@@ -1,0 +1,54 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "🐳 Docker: Avvia Tutti i Servizi",
+            "type": "shell",
+            "command": "docker-compose",
+            "args": ["up", "-d", "--build"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always"
+            },
+            "options": {
+                "shell": {
+                    "executable": "powershell.exe"
+                }
+            }
+        },
+        {
+            "label": "🛑 Docker: Ferma Tutti i Servizi", 
+            "type": "shell",
+            "command": "docker-compose",
+            "args": ["down"],
+            "group": "build",
+            "options": {
+                "shell": {
+                    "executable": "powershell.exe"
+                }
+            }
+        },
+        {
+            "label": "🤖 Ollama: Scarica Modelli",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-Command", "docker exec ollama ollama pull mistral; docker exec ollama ollama pull llama2:7b-chat"],
+            "group": "build"
+        },
+        {
+            "label": "🔬 CrewAI: Esegui Analisi Finanziaria",
+            "type": "shell", 
+            "command": "docker",
+            "args": ["exec", "-it", "crewai", "python", "main.py"],
+            "group": "test"
+        },
+        {
+            "label": "🏥 Sistema: Verifica Servizi",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-File", "./scripts/health_check.ps1"],
+            "group": "test"
+        }
+    ]
+}

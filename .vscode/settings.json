@@ -15,6 +15,7 @@
         "**/node_modules/**": true,
         "**/.git/objects/**": true,
         "**/data/**": true,
-        "**/volumes/**": true
+        "**/volumes/**": true,
+        "**/crewai/.venv/**": true
     }
 }

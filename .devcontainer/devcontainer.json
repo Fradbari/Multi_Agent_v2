@@ -1,0 +1,21 @@
+{
+    "name": "Multi-Agent CrewAI Ecosystem",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "crewai",
+    "workspaceFolder": "/usr/src/app",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/src/app/.venv/bin/python",
+                "python.analysis.extraPaths": ["/usr/src/app"],
+                "terminal.integrated.defaultProfile.linux": "bash"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-docker.docker",
+                "ms-kubernetes-tools.vscode-kubernetes-tools"
+            ]
+        }
+    },
+    "postCreateCommand": "python -m venv .venv && .venv/bin/pip install -r requirements.txt"
+}

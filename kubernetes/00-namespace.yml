@@ -2,3 +2,15 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: multi-agent-ecosystem
+  labels:
+    name: multi-agent-ecosystem
+    type: multi-agent-system
+    environment: development
+    managed-by: vscode
+---
+# ServiceAccount per operazioni nel namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: multi-agent-service-account
+  namespace: multi-agent-ecosystem
