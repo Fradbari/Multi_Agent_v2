@@ -6,7 +6,7 @@
     "customizations": {
         "vscode": {
             "settings": {
-                "python.defaultInterpreterPath": "/usr/src/app/.venv/bin/python",
+                "python.defaultInterpreterPath": "/usr/src/app/crewai/.venv/bin/python",
                 "python.analysis.extraPaths": ["/usr/src/app"],
                 "terminal.integrated.defaultProfile.linux": "bash"
             },
