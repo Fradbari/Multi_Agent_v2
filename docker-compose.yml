@@ -66,6 +66,13 @@ services:
     build:
       context: ./crewai
     container_name: crewai
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OUTPUT_DIR=/app/storage
+      - CREWAI_STORAGE_DIR=/app/storage
+      - LOG_LEVEL=INFO
+    volumes:
+      - crewai_storage:/app/storage
     networks:
       - multi-agent-net
     depends_on:
@@ -135,3 +142,4 @@ volumes:
   open_webui_data:
   flowise_data:
   redis_data: 
+  crewai_storage:

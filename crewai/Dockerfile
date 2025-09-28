@@ -26,10 +26,11 @@ RUN /usr/src/app/crewai/.venv/bin/pip install --upgrade pip && \
 
 # Copy the rest of the application's code into the container
 COPY . .
-COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 # Assicurati che le directory abbiano i permessi corretti
 RUN chmod -R 755 /app/storage /app/outputs
 
 # Command to run the application
-CMD ["/usr/src/app/crewai/.venv/bin/python", "main.py"]
+#CMD ["/usr/src/app/crewai/.venv/bin/python", "main.py"]
+ENTRYPOINT ["./entrypoint.sh"]
