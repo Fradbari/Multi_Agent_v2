@@ -39,7 +39,8 @@ try:
     # CONFIGURAZIONE LLM OTTIMIZZATA - INSERIRE QUI
     # Per l'analista - temperatura più bassa per precisione
     analyst_llm = Ollama(
-        model="mistral", 
+        #model="mistral", 
+        model="Mistral-Nemo-12B Q5_K_M",
         base_url=ollama_base_url,
         temperature=0.1,  # Maggiore consistenza nell'analisi
         max_tokens=4000,
@@ -48,7 +49,8 @@ try:
     
     # Per lo stratega - leggera creatività per strategie innovative  
     strategist_llm = Ollama(
-        model="mistral", 
+        #model="mistral", 
+        model="Mistral-Nemo-12B Q5_K_M",
         base_url=ollama_base_url,
         temperature=0.3,  # Bilanciamento tra precisione e creatività
         max_tokens=4000,
