@@ -11,6 +11,13 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - multi-agent-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
     restart: unless-stopped
 
   # Vector Database
