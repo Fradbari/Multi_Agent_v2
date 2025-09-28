@@ -1,0 +1,20 @@
+{
+    "docker.containers.groupBy": "Compose Project Name",
+    "kubernetes.defaultNamespace": "multi-agent-ecosystem", 
+    "python.defaultInterpreterPath": "./crewai/.venv/Scripts/python.exe",
+    "python.analysis.extraPaths": ["./crewai"],
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell"
+        }
+    },
+    "files.eol": "\n",
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.git/objects/**": true,
+        "**/data/**": true,
+        "**/volumes/**": true
+    }
+}
