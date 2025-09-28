@@ -32,6 +32,13 @@ spec:
         image: ollama/ollama
         ports:
         - containerPort: 11434
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
         volumeMounts:
         - name: ollama-storage
           mountPath: /root/.ollama

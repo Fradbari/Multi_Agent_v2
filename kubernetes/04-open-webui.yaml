@@ -35,6 +35,13 @@ spec:
         env:
         - name: OLLAMA_BASE_URL
           value: "http://ollama:11434"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         volumeMounts:
         - name: open-webui-data
           mountPath: /app/backend/data

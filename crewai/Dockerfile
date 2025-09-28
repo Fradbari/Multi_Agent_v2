@@ -27,6 +27,9 @@ COPY . .
 # Assicurati che le directory abbiano i permessi corretti
 RUN chmod -R 755 /app/storage /app/outputs
 
+# Install Ollama and pull the Mistral model
+RUN curl -fsSL https://ollama.ai/install.sh | sh
+RUN ollama serve & sleep 5 && ollama pull mistral-nemo:12b-instruct-2407-q5_K_M
+
 # Command to run the application
-#CMD ["python", "main.py"]
 CMD ["/usr/src/app/crewai/.venv/bin/python", "main.py"]

@@ -32,6 +32,13 @@ spec:
         image: flowiseai/flowise:latest
         ports:
         - containerPort: 3000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
         volumeMounts:
         - name: flowise-data
           mountPath: /root/.flowise
