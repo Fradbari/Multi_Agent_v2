@@ -93,6 +93,8 @@ services:
     image: redis:alpine
     container_name: nextcloud-redis
     restart: unless-stopped
+    volumes:
+      - redis_data:/data
     networks:
       - multi-agent-net
 
@@ -132,3 +134,4 @@ volumes:
   ollama_data:
   open_webui_data:
   flowise_data:
+  redis_data: 
