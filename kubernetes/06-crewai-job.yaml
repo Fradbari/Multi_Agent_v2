@@ -17,24 +17,24 @@ spec:
         - name: OLLAMA_BASE_URL
           value: "http://ollama:11434" # Connects to the Ollama service in the same namespace
         - name: OUTPUT_DIR
-          value: "/app/outputs"
-        - name: CREWAI_STORAGE_DIR
           value: "/app/storage"
-        - name: OUTPUT_DIR
+        - name: CREWAI_STORAGE_DIR
           value: "/app/storage"
         - name: LOG_LEVEL
           value: "INFO"
         volumeMounts:
-        - name: output-storage
-          mountPath: /app/outputs
-        - name: storage-volume
+        - name: crewai-storage
           mountPath: /app/storage
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
       restartPolicy: Never
       volumes:
-      - name: output-storage
-        persistentVolumeClaim:
-          claimName: crewai-outputs-pvc
-      - name: storage-volume
+      - name: crewai-storage
         persistentVolumeClaim:
           claimName: crewai-outputs-pvc
   backoffLimit: 4

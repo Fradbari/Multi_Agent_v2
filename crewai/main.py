@@ -268,7 +268,7 @@ strategy_task = Task(
     """,
     agent=investment_strategist,
     context=[analysis_task],  
-    output_file=f"{output_dir}/market_analysis_{STOCK_TICKER}.md"
+    output_file=f"{output_dir}/investment_strategy_{STOCK_TICKER}.md"
 )
 
 # Configura storage personalizzato per Kubernetes
