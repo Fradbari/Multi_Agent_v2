@@ -1,4 +1,6 @@
 import os
+import logging
+from datetime import datetime
 import yfinance as yf
 from crewai import Agent, Task, Crew, Process
 from langchain_community.llms import Ollama
@@ -6,18 +8,55 @@ from langchain_community.llms import Ollama
 from langchain.tools import DuckDuckGoSearchRun
 from crewai.tools import BaseTool
 
+# Configura logging dettagliato per debug
+log_level = os.getenv("LOG_LEVEL", "INFO")
+logging.basicConfig(
+    level=getattr(logging, log_level),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(f'/app/storage/crewai_debug_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # --- Configuration ---
 # You can change the stock ticker and the research date range here
 STOCK_TICKER = "TSLA"
 RESEARCH_DATE_START = "2023-01-01"
 RESEARCH_DATE_END = "2024-01-01"
 
+# --- Output Directory Setup ---
+# Use the OUTPUT_DIR environment variable if available, otherwise default to /app/outputs
+output_dir = os.getenv("OUTPUT_DIR", "/app/outputs")
+os.makedirs(output_dir, exist_ok=True)
+
 # --- LLM and Tool Setup ---
 try:
     # Use the OLLAMA_BASE_URL environment variable if available, otherwise default to localhost
     ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    ollama_llm = Ollama(model="mistral", base_url=ollama_base_url)
+
+    # CONFIGURAZIONE LLM OTTIMIZZATA - INSERIRE QUI
+    # Per l'analista - temperatura più bassa per precisione
+    analyst_llm = Ollama(
+        model="mistral", 
+        base_url=ollama_base_url,
+        temperature=0.1,  # Maggiore consistenza nell'analisi
+        max_tokens=4000,
+        top_p=0.9
+    )
+    
+    # Per lo stratega - leggera creatività per strategie innovative  
+    strategist_llm = Ollama(
+        model="mistral", 
+        base_url=ollama_base_url,
+        temperature=0.3,  # Bilanciamento tra precisione e creatività
+        max_tokens=4000,
+        top_p=0.9
+    )
+
     print(f"Connessione riuscita a Ollama a {ollama_base_url}")
+    
 except Exception as e:
     print(f"Impossibile connettersi a Ollama. Assicurati che sia in esecuzione e accessibile. Errore: {e}")
     exit()
@@ -83,7 +122,7 @@ market_analyst = Agent(
     max_rpm=None,
     memory=True,
     tools=[search_tool, financial_tool.get_stock_data, financial_tool.get_company_info],
-    llm=ollama_llm
+    llm=analyst_llm
 )
 
 # 2. Financial Investment Strategist
@@ -105,8 +144,17 @@ investment_strategist = Agent(
     allow_delegation=False,
     max_iter=12,
     memory=True,
-    llm=ollama_llm
+    llm=strategist_llm
 )
+
+# GESTIONE ERRORI E RETRY - INSERIRE QUI
+# Configurazioni per robustezza
+market_analyst.max_retry_limit = 3
+investment_strategist.max_retry_limit = 3
+
+# Aggiungi timeout per le operazioni
+market_analyst.request_timeout = 300  # 5 minuti
+investment_strategist.request_timeout = 200  # Meno tempo per strategia
 
 # --- Task Definitions ---
 # Task for the Market Analyst
@@ -159,7 +207,7 @@ analysis_task = Task(
     """,
     agent=market_analyst,
     context=[],
-    output_file=f"market_analysis_{STOCK_TICKER}.md"
+    output_file=f"{output_dir}/market_analysis_{STOCK_TICKER}.md"
 )
 
 # Task for the Investment Strategist
@@ -220,26 +268,133 @@ strategy_task = Task(
     """,
     agent=investment_strategist,
     context=[analysis_task],  
-    output_file=f"investment_strategy_{STOCK_TICKER}.md"
+    output_file=f"{output_dir}/market_analysis_{STOCK_TICKER}.md"
 )
+
+# Configura storage personalizzato per Kubernetes
+storage_path = os.getenv("CREWAI_STORAGE_DIR", "/app/storage")
+os.makedirs(storage_path, exist_ok=True)
+os.environ["CREWAI_STORAGE_DIR"] = storage_path
 
 # --- Crew Definition ---
 financial_crew = Crew(
     agents=[market_analyst, investment_strategist],
     tasks=[analysis_task, strategy_task],
     process=Process.sequential,
-    verbose=2
+    verbose=2,
+    memory=True,      # Abilita memoria condivisa tra agenti
+    cache=True,       # Cache per migliorare performance
+    max_rpm=None,     # Nessun limite RPM per velocità massima
+    output_log_file=f"{storage_path}/crew_log_{STOCK_TICKER}.txt"  # Log persistenti
 )
+
+# VALIDAZIONE OUTPUT - INSERIRE QUI
+def validate_analysis_output(output):
+    """Valida che il report dell'analista contenga le sezioni richieste"""
+    required_sections = [
+        'Executive Summary', 
+        'Analisi Tecnica', 
+        'Analisi Fondamentale',
+        'Market Sentiment',
+        'Risk Assessment'
+    ]
+    
+    output_str = str(output)
+    missing_sections = []
+    
+    for section in required_sections:
+        if section.lower() not in output_str.lower():
+            missing_sections.append(section)
+    
+    if missing_sections:
+        logger.warning(f"Sezioni mancanti nel report: {missing_sections}")
+        return False, missing_sections
+    
+    logger.info("Validazione output completata con successo")
+    return True, []
+
+def validate_strategy_output(output):
+    """Valida che la strategia contenga raccomandazione chiara"""
+    output_str = str(output).upper()
+    
+    has_recommendation = any(rec in output_str for rec in ['BUY', 'SELL', 'HOLD'])
+    has_target_price = 'TARGET PRICE' in output_str
+    has_rationale = 'RATIONALE' in output_str or 'KEY RATIONALE' in output_str
+    
+    if not (has_recommendation and has_target_price and has_rationale):
+        logger.warning("Output della strategia manca di elementi essenziali")
+        return False
+    
+    logger.info("Validazione strategia completata con successo")
+    return True
 
 # --- Execute the Crew ---
 if __name__ == '__main__':
-    print("🚀 Starting Financial Analysis Crew for", STOCK_TICKER)
+    logger.info(f"🚀 Starting Financial Analysis Crew for {STOCK_TICKER}")
+    print("🚀 Starting Financial Analysis Crew per ", STOCK_TICKER)
     print("-" * 50)
 
     result = financial_crew.kickoff()
 
-    print("\n\n" + "="*50)
-    print("✅ Financial Analysis Complete")
-    print("="*50 + "\n")
-    print("Final Report:")
-    print(result)
+    try:
+        # Esecuzione con gestione errori
+        result = financial_crew.kickoff()
+        
+        # Validazione dei risultati
+        if len(financial_crew.tasks) >= 2:
+            # Valida output dell'analista
+            analysis_valid, missing_sections = validate_analysis_output(
+                financial_crew.tasks[0].output
+            )
+            if not analysis_valid:
+                logger.warning(f"Report dell'analista incompleto: {missing_sections}")
+            
+            # Valida output dello stratega  
+            strategy_valid = validate_strategy_output(
+                financial_crew.tasks[1].output
+            )
+            if not strategy_valid:
+                logger.warning("Strategia di investimento incompleta")
+        
+        # Output finale
+        print("\n\n" + "="*50)
+        print("✅ Financial Analysis Complete")
+        print("="*50 + "\n")
+        print("Final Report:")
+        print(result)
+        
+        logger.info("Esecuzione completata con successo")
+        
+        # Salva anche in un file di riepilogo
+        summary_path = f"{storage_path}/final_report_{STOCK_TICKER}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        try:
+            with open(summary_path, 'w', encoding='utf-8') as f:
+                f.write(str(result))
+            logger.info(f"Report salvato in: {summary_path}")
+        except Exception as save_error:
+            logger.error(f"Errore nel salvataggio del report: {save_error}")
+            
+    except Exception as e:
+        logger.error(f"Errore nell'esecuzione del crew: {e}")
+        print(f"❌ Errore nell'esecuzione: {e}")
+        
+        # Strategia di fallback
+        try:
+            print("🔄 Tentativo di esecuzione semplificata...")
+            # Versione semplificata senza memoria e cache
+            fallback_crew = Crew(
+                agents=[market_analyst, investment_strategist],
+                tasks=[analysis_task, strategy_task],
+                process=Process.sequential,
+                verbose=1,
+                memory=False,
+                cache=False
+            )
+            result = fallback_crew.kickoff()
+            print("✅ Esecuzione semplificata completata")
+            print(result)
+            
+        except Exception as fallback_error:
+            logger.critical(f"Anche l'esecuzione di fallback è fallita: {fallback_error}")
+            print(f"❌ Errore critico: {fallback_error}")
+            exit(1)

@@ -7,7 +7,7 @@ spec:
   template:
     spec:
       containers:
-      - name: crewai-agent
+      - name: crewai-financial-agent
         # IMPORTANT: You must build and push this image to your container registry.
         # Example: docker build -t your-registry/crewai-financial-agent:latest ./crewai
         # And then: docker push your-registry/crewai-financial-agent:latest
@@ -16,5 +16,25 @@ spec:
         env:
         - name: OLLAMA_BASE_URL
           value: "http://ollama:11434" # Connects to the Ollama service in the same namespace
+        - name: OUTPUT_DIR
+          value: "/app/outputs"
+        - name: CREWAI_STORAGE_DIR
+          value: "/app/storage"
+        - name: OUTPUT_DIR
+          value: "/app/storage"
+        - name: LOG_LEVEL
+          value: "INFO"
+        volumeMounts:
+        - name: output-storage
+          mountPath: /app/outputs
+        - name: storage-volume
+          mountPath: /app/storage
       restartPolicy: Never
+      volumes:
+      - name: output-storage
+        persistentVolumeClaim:
+          claimName: crewai-outputs-pvc
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: crewai-outputs-pvc
   backoffLimit: 4
