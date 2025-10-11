@@ -3,10 +3,21 @@ import logging
 from datetime import datetime
 import yfinance as yf
 from crewai import Agent, Task, Crew, Process
-from langchain_community.llms import Ollama
-# from crewai_tools import DuckDuckGoSearchRun # Deprecated
-from langchain.tools import DuckDuckGoSearchRun
 from crewai.tools import BaseTool
+
+# Importa OllamaLLM con fallback
+try:
+    from langchain_ollama import OllamaLLM
+except ImportError:
+    from langchain_community.llms import Ollama as OllamaLLM
+
+# Importa tools con fallback
+try:
+    from langchain_community.tools import DuckDuckGoSearchRun
+except ImportError:
+    from langchain.tools import DuckDuckGoSearchRun
+
+
 
 # Configura logging dettagliato per debug
 log_level = os.getenv("LOG_LEVEL", "INFO")
@@ -39,23 +50,21 @@ try:
 
     # CONFIGURAZIONE LLM OTTIMIZZATA - INSERIRE QUI
     # Per l'analista - temperatura più bassa per precisione
-    analyst_llm = Ollama(
-        #model="mistral", 
+    analyst_llm = OllamaLLM(
         model="mistral-nemo:12b-instruct-2407-q5_K_M",
         base_url=ollama_base_url,
-        temperature=0.1,  # Maggiore consistenza nell'analisi
-        max_tokens=4000,
-        top_p=0.9
+        temperature=0.1  # Maggiore consistenza nell'analisi
+        #max_tokens=4000, # Ha causato un crash
+        #top_p=0.9 
     )
     
     # Per lo stratega - leggera creatività per strategie innovative  
-    strategist_llm = Ollama(
-        #model="mistral", 
+    strategist_llm = OllamaLLM(
         model="mistral-nemo:12b-instruct-2407-q5_K_M",
         base_url=ollama_base_url,
-        temperature=0.3,  # Bilanciamento tra precisione e creatività
-        max_tokens=4000,
-        top_p=0.9
+        temperature=0.3  # Bilanciamento tra precisione e creatività
+        #max_tokens=4000, # Ha causato un crash
+        #top_p=0.9
     )
 
     print(f"Connessione riuscita a Ollama a {ollama_base_url}")

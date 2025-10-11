@@ -34,7 +34,15 @@ echo "✅ Ollama service is ready!"
 
 # Verifica se il modello è già presente
 echo "🔍 Checking if model exists..."
-MODEL_EXISTS=$(curl -s http://ollama:11434/api/tags | grep -c "mistral-nemo:12b-instruct-2407-q5_K_M" || echo "0")
+MODEL_CHECK_RESPONSE=$(curl -s http://ollama:11434/api/tags || echo "ERROR")
+
+if [ "$MODEL_CHECK_RESPONSE" = "ERROR" ]; then
+    echo "❌ Failed to check models"
+    exit 1
+fi
+
+MODEL_EXISTS=$(echo "$MODEL_CHECK_RESPONSE" | grep -c "mistral-nemo:12b-instruct-2407-q5_K_M" || echo "0")
+
 
 if [ "$MODEL_EXISTS" -eq 0 ]; then
     echo "📥 Downloading model mistral-nemo:12b-instruct-2407-q5_K_M..."
