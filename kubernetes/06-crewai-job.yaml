@@ -1,49 +1,213 @@
-apiVersion: batch/v1
-kind: Job
+# =============================================================================
+# CrewAI API Service - PersistentVolumeClaim
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: crewai-financial-analysis-job
+  name: crewai-api-storage-pvc
   namespace: multi-agent-ecosystem
 spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+# =============================================================================
+# CrewAI API Service - ConfigMap
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crewai-api-config
+  namespace: multi-agent-ecosystem
+data:
+  OLLAMA_BASE_URL: "http://ollama:11434"
+  OUTPUT_DIR: "/app/outputs"
+  CREWAI_STORAGE_DIR: "/app/storage"
+  LOG_LEVEL: "INFO"
+  PYTHONPATH: "/app"
+---
+# =============================================================================
+# CrewAI API Service - Deployment
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crewai-api
+  namespace: multi-agent-ecosystem
+  labels:
+    app: crewai-api
+    version: "1.0.0"
+spec:
+  replicas: 1  # Can be scaled up for high availability
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: crewai-api
   template:
+    metadata:
+      labels:
+        app: crewai-api
+        version: "1.0.0"
     spec:
-      containers:
-      - name: crewai-financial-agent
-        # IMPORTANT: You must build and push this image to your container registry.
-        # Example: docker build -t your-registry/crewai-financial-agent:latest ./crewai
-        # And then: docker push your-registry/crewai-financial-agent:latest
-        image: crewai-financial-agent:latest
-        imagePullPolicy: IfNotPresent # Use 'Always' if you use a remote registry
-        env:
-        - name: OLLAMA_BASE_URL
-          value: "http://ollama:11434" # Connects to the Ollama service in the same namespace
-        - name: OUTPUT_DIR
-          value: "/app/storage"
-        - name: CREWAI_STORAGE_DIR
-          value: "/app/storage"
-        - name: LOG_LEVEL
-          value: "INFO"
-        volumeMounts:
-        - name: crewai-storage
-          mountPath: /app/storage
+      # Security Context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      # Init Container to wait for Ollama
+      initContainers:
+      - name: wait-for-ollama
+        image: curlimages/curl:8.4.0
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for Ollama to be ready..."
+          until curl -f http://ollama:11434/api/tags; do
+            echo "Ollama not ready, waiting 10 seconds..."
+            sleep 10
+          done
+          echo "Ollama is ready!"
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "32Mi"
+            cpu: "10m"
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "64Mi"
+            cpu: "50m"
+      
+      containers:
+      - name: crewai-api
+        image: crewai-financial-agent:api-latest  # Update this to your image
+        imagePullPolicy: IfNotPresent
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: crewai-api-config
+        
+        # Volume mounts
+        volumeMounts:
+        - name: storage-volume
+          mountPath: /app/storage
+        - name: outputs-volume  
+          mountPath: /app/outputs
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        
+        # Liveness probe for container health
         livenessProbe:
-          exec:
-            command:
-            - python
-            - -c
-            - "import os; exit(0 if os.path.exists('/app/storage') else 1)"
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        # Readiness probe for service availability
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
           initialDelaySeconds: 30
-          periodSeconds: 60
-      restartPolicy: Never
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 2
+        
+        # Startup probe for initial startup
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30  # Allow 5 minutes for startup
+      
+      # Volumes
       volumes:
-      - name: crewai-storage
+      - name: storage-volume
         persistentVolumeClaim:
-          claimName: crewai-outputs-pvc
-  backoffLimit: 4
-
+          claimName: crewai-api-storage-pvc
+      - name: outputs-volume
+        persistentVolumeClaim:
+          claimName: crewai-api-storage-pvc  # Shared storage for now
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # Node selection (optional)
+      # nodeSelector:
+      #   kubernetes.io/arch: amd64
+---
+# =============================================================================
+# CrewAI API Service - Service
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: crewai-api
+  namespace: multi-agent-ecosystem
+  labels:
+    app: crewai-api
+spec:
+  type: LoadBalancer  # Change to ClusterIP if using ingress
+  selector:
+    app: crewai-api
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  # Uncomment for specific LoadBalancer IP
+  # loadBalancerIP: "192.168.1.100"
+---
+# =============================================================================
+# CrewAI API Service - Horizontal Pod Autoscaler (Optional)
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: crewai-api-hpa
+  namespace: multi-agent-ecosystem
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: crewai-api
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

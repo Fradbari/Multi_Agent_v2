@@ -61,23 +61,35 @@ services:
       - multi-agent-net
     restart: unless-stopped
 
-  # Python-based Agent Orchestration
-  crewai:
+  # Python-based Agent Orchestration - API SERVICE VERSION
+  crewai-api:
     build:
       context: ./crewai
-    container_name: crewai
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OUTPUT_DIR=/app/storage
-      - CREWAI_STORAGE_DIR=/app/storage
-      - LOG_LEVEL=INFO
+      target: production  # Use production stage
+    container_name: crewai-api
+    ports:
+      - "8000:8000"  # Expose API port
     volumes:
       - crewai_storage:/app/storage
+      - crewai_outputs:/app/outputs
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OUTPUT_DIR=/app/outputs  
+      - CREWAI_STORAGE_DIR=/app/storage
+      - LOG_LEVEL=INFO
     networks:
       - multi-agent-net
     depends_on:
       - ollama
-    restart: "no" # Or 'on-failure' if you want it to retry
+      - qdrant
+      - nextcloud-redis  # For future caching integration
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # --- Data Storage and Management ---
 
@@ -143,3 +155,4 @@ volumes:
   flowise_data:
   redis_data: 
   crewai_storage:
+  crewai_outputs:

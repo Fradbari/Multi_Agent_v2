@@ -17,5 +17,6 @@
         "**/data/**": true,
         "**/volumes/**": true,
         "**/crewai/.venv/**": true
-    }
+    },
+    "containers.containers.groupBy": "Compose Project Name"
 }
