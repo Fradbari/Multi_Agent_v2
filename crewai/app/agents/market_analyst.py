@@ -1,5 +1,8 @@
 from crewai import Agent
-from langchain_community.llms import Ollama
+try:
+    from langchain_ollama import OllamaLLM
+except ImportError:
+    from langchain_community.llms import Ollama as OllamaLLM
 from typing import List, Optional
 import logging
 import os
@@ -13,17 +16,15 @@ def create_market_analyst(
     custom_instructions: Optional[str] = None
 ) -> Agent:
     """
-    Factory function to create Market Research Analyst with dynamic configuration.
-    This approach follows CrewAI best practices for modular agent creation.
+    Funzione Factory per creare analisti di ricerche di mercato con configurazione dinamica.
+    Questo approccio segue le best practice di CrewAI per la creazione di agenti modulari.
     """
     
     # Default LLM configuration optimized for analysis precision
     default_llm_config = {
         "model": "mistral-nemo:12b-instruct-2407-q5_K_M",
         "base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-        "temperature": 0.1,  # Low temperature for consistent analysis
-        "max_tokens": 4000,
-        "top_p": 0.9
+        "temperature": 0.1  # Low temperature for consistent analysis
     }
     
     # Merge custom config with defaults
@@ -31,7 +32,7 @@ def create_market_analyst(
     
     try:
         # Initialize LLM with configuration
-        analyst_llm = Ollama(**final_config)
+        analyst_llm = OllamaLLM(**final_config)
         logger.info(f"LLM initialized for market analyst: {final_config['model']}")
         
     except Exception as e:

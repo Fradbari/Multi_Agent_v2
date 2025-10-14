@@ -1,5 +1,10 @@
-from langchain.tools import DuckDuckGoSearchRun
-from crewai.tools import BaseTool
+# ✅ CORRETTO - Versione aggiornata per CrewAI moderno
+from langchain_community.tools import DuckDuckGoSearchRun
+from crewai_tools import BaseTool  # ✅ Import corretto
+# OPPURE usa l'approccio diretto:
+# from typing import Type
+# from pydantic import BaseModel, Field
+
 import logging
 
 logger = logging.getLogger(__name__)
