@@ -1,25 +1,25 @@
-# CrewAI Core - Versioni specifiche compatibili
-crewai>=0.100.0
-crewai_tools>=0.100.0
-langchain_community>=0.3.0
-langchain_ollama>=0.3.0
-langchain>=0.3.0
+# CrewAI Core - Versioni compatibili con Pydantic moderno
+crewai>=0.203.0,<1.0.0
+crewai_tools>=0.71.0,<1.0.0
+langchain_community>=0.3.0,<0.4.0
+langchain_ollama>=0.3.0,<0.4.0
+langchain>=0.3.0,<0.4.0
 
-# API Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
+# API Framework - Versioni ottimizzate per Pydantic 2.11.9+
+fastapi>=0.118.0,<0.125.0
+uvicorn[standard]>=0.34.0,<0.40.0
+pydantic>=2.11.9,<3.0.0
 
-# Background Tasks
-celery==5.3.4
-redis==5.0.1
+# Background Tasks - Versioni moderne stabili
+celery>=5.4.0,<6.0.0
+redis>=6.0.0,<7.0.0
 
-# Financial & Web Tools
-python-dotenv
-yfinance
-pandas
+# Financial & Web Tools - Versioni pinned per stabilità
+python-dotenv>=1.0.0,<2.0.0
+yfinance>=0.2.50,<0.3.0
+pandas>=2.1.0,<3.0.0
 
-# Utilities
-python-multipart
-requests
-aiofiles
+# Utilities - Versioni con patches sicurezza
+python-multipart>=0.0.15,<1.0.0
+requests>=2.32.0,<3.0.0
+aiofiles>=24.0.0,<25.0.0
