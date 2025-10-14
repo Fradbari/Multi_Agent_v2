@@ -10,6 +10,38 @@ import uvicorn
 
 from .api.routes import router as api_router
 
+# ✅ CORRETTO - Configurazione logging sicura
+def setup_logging():
+    """Setup logging with proper directory creation"""
+    # Ensure storage directory exists
+    storage_dir = "/app/storage"
+    os.makedirs(storage_dir, exist_ok=True)
+    
+    # Configure logging DOPO aver creato le directory
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(f'{storage_dir}/crewai_api.log')
+        ],
+        force=True  # Forza reconfigurazione se necessario
+    )
+
+# Setup logging at module level - MA con directory creation
+try:
+    setup_logging()
+except PermissionError:
+    # Fallback a solo console se permission problem
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[logging.StreamHandler()]
+    )
+
+logger = logging.getLogger(__name__)
+
+"""
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -21,6 +53,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+"""
 
 # Lifespan events for startup/shutdown
 @asynccontextmanager

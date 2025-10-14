@@ -55,6 +55,7 @@ WORKDIR /app
 
 # Copy application code
 COPY --chown=appuser:appuser ./app ./app
+RUN chmod -R 755 /app/storage /app/outputs
 
 # Create entrypoint script for flexible configuration
 RUN echo '#!/bin/bash\n\
