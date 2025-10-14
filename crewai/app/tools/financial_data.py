@@ -8,8 +8,37 @@ class FinancialDataTool:
     """Enhanced Financial Data Tool with error handling and validation"""
     
     def __init__(self):
+        self.name = "Financial Data Tool"
+        self.description = "Fornisce dati finanziari e informazioni aziendali per azioni"
         self.cache = {}
     
+    def run(self, query: str) -> str:
+        """
+        Unified run method for CrewAI compatibility
+        Expected query formats:
+        - "stock_data:TSLA:2024-01-01:2024-12-31"
+        - "company_info:TSLA"
+        """
+        try:
+            parts = query.split(":")
+            if len(parts) < 2:
+                return "Formato query non valido. Usa: 'stock_data:TICKER:START:END' o 'company_info:TICKER'"
+            
+            action = parts[0]
+            ticker = parts[1]
+            
+            if action == "stock_data" and len(parts) == 4:
+                return self.get_stock_data(ticker, parts[2], parts[3])
+            elif action == "company_info":
+                return self.get_company_info(ticker)
+            else:
+                return "Azione non riconosciuta. Usa 'stock_data' o 'company_info'"
+                
+        except Exception as e:
+            error_msg = f"Errore nell'esecuzione: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
     def get_stock_data(self, ticker: str, start_date: str, end_date: str) -> str:
         """
         Fetches historical stock data for a given ticker between two dates.

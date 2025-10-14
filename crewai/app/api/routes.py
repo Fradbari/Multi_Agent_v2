@@ -34,7 +34,7 @@ completed_jobs: Dict[str, AnalysisResponse] = {}
 # Tools initialization
 financial_tool = FinancialDataTool()
 search_tool = get_search_tool()
-tools = [financial_tool.get_stock_data, financial_tool.get_company_info, search_tool.run]
+tools = [financial_tool, search_tool]
 
 @router.get("/health", response_model=HealthCheckResponse)
 async def health_check():
