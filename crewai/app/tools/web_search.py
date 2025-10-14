@@ -1,4 +1,3 @@
-# Versione aggiornata per CrewAI moderno
 from langchain_community.tools import DuckDuckGoSearchRun
 from crewai.tools import BaseTool  
 # OPPURE usa l'approccio diretto:
