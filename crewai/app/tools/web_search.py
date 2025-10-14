@@ -1,6 +1,6 @@
-# ✅ CORRETTO - Versione aggiornata per CrewAI moderno
+# Versione aggiornata per CrewAI moderno
 from langchain_community.tools import DuckDuckGoSearchRun
-from crewai_tools import BaseTool  # ✅ Import corretto
+from crewai.tools import BaseTool  
 # OPPURE usa l'approccio diretto:
 # from typing import Type
 # from pydantic import BaseModel, Field

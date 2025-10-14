@@ -18,6 +18,8 @@ redis>=6.0.0,<7.0.0
 python-dotenv>=1.0.0,<2.0.0
 yfinance>=0.2.50,<0.3.0
 pandas>=2.1.0,<3.0.0
+duckduckgo-search>=6.2.13  
+ddgs>=6.2.13 
 
 # Utilities - Versioni con patches sicurezza
 python-multipart>=0.0.15,<1.0.0
