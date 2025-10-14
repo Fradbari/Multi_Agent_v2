@@ -94,3 +94,8 @@ class DuckDuckGoSearchTool(BaseTool):
             error_msg = f"❌ Errore generale nella ricerca per '{query}': {str(e)}"
             logger.error(error_msg)
             return error_msg
+
+# Factory function per compatibilità con il codice esistente
+def get_search_tool():
+    """Factory function che restituisce un'istanza di DuckDuckGoSearchTool"""
+    return DuckDuckGoSearchTool()
