@@ -1,18 +1,27 @@
+# Versione aggiornata per CrewAI moderno
 from langchain_community.tools import DuckDuckGoSearchRun
+from crewai.tools import BaseTool  
+from typing import Dict, Any
+from pydantic import Field
+
 import logging
 
 logger = logging.getLogger(__name__)
 
-class DuckDuckGoSearchTool:
-    """Simplified search tool without BaseTool inheritance - compatibile con CrewAI"""
+class DuckDuckGoSearchTool(BaseTool):
+    name: str = "DuckDuckGo Search"
+    description: str = "Cerca informazioni aggiornate sul web per un determinato argomento"
     
-    def __init__(self):
-        self.name = "DuckDuckGo Search"
-        self.description = "Cerca informazioni aggiornate sul web per un determinato argomento"
-        self.search_engine = DuckDuckGoSearchRun()
-        self.cache = {}
+    #def __init__(self):
+    #    super().__init__()
+    #    self.search_engine = DuckDuckGoSearchRun()
+    #    self.cache = {}
     
-    def run(self, query: str) -> str:
+    # ✅ CORRETTO: Dichiarare tutti i field come attributi di classe
+    search_engine: Any = Field(default_factory=DuckDuckGoSearchRun, exclude=True)
+    cache: Dict[str, str] = Field(default_factory=dict, exclude=True)
+
+    def _run(self, query: str) -> str:
         """Enhanced search with caching and error handling"""
         
         if query in self.cache:
@@ -34,7 +43,3 @@ class DuckDuckGoSearchTool:
             error_msg = f"Errore nella ricerca per '{query}': {str(e)}"
             logger.error(error_msg)
             return error_msg
-
-# Factory function per creare l'istanza
-def get_search_tool():
-    return DuckDuckGoSearchTool()

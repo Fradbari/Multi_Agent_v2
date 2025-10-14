@@ -17,7 +17,8 @@ from .models import (
 from ..agents import create_market_analyst, create_investment_strategist
 from ..tasks import create_analysis_task, create_strategy_task
 from ..tools.financial_data import FinancialDataTool
-from ..tools.web_search import DuckDuckGoSearchTool
+#from ..tools.web_search import DuckDuckGoSearchTool
+from ..tools.web_search import get_search_tool
 from crewai import Crew, Process
 
 # Setup logging
@@ -32,8 +33,8 @@ completed_jobs: Dict[str, AnalysisResponse] = {}
 
 # Tools initialization
 financial_tool = FinancialDataTool()
-search_tool = DuckDuckGoSearchTool()
-tools = [financial_tool.get_stock_data, financial_tool.get_company_info, search_tool]
+search_tool = get_search_tool()
+tools = [financial_tool.get_stock_data, financial_tool.get_company_info, search_tool.run]
 
 @router.get("/health", response_model=HealthCheckResponse)
 async def health_check():
