@@ -1,5 +1,5 @@
 from crewai.tools import BaseTool
-from typing import Type
+from typing import Type, Dict, Any
 from pydantic import BaseModel, Field
 import logging
 import requests
@@ -16,9 +16,8 @@ class DuckDuckGoSearchTool(BaseTool):
     description: str = "Cerca informazioni aggiornate sul web su un argomento specifico"
     args_schema: Type[BaseModel] = SearchInput
     
-    def __init__(self):
-        super().__init__()
-        self.cache = {}
+    # ✅ CORRETTO - Dichiara cache come field di classe
+    cache: Dict[str, str] = Field(default_factory=dict, exclude=True)
     
     def _run(self, query: str) -> str:
         """Execute web search"""
