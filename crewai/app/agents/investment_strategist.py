@@ -21,7 +21,7 @@ def create_investment_strategist(
         "model": "mistral-nemo:12b-instruct-2407-q5_K_M",
         "base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
         "temperature": 0.3,  # Moderate creativity for innovative strategies
-        "max_tokens": 4000,
+        #"max_tokens": 4000,
         "top_p": 0.9
     }
     
